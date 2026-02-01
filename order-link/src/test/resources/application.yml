@@ -1,0 +1,37 @@
+spring:
+    autoconfigure:
+        exclude:
+        - org.springframework.boot.autoconfigure.web.client.RestClientAutoConfiguration
+    application:
+        name: order-link
+    datasource:
+        url: jdbc:postgresql://localhost:5432/order-link-db
+        username: admin
+        password: admin
+        driver-class-name: org.postgresql.Driver
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate:
+            ddl-auto: update
+        show-sql: true
+    flyway:
+        baseline-on-migrate: true
+        baseline-version: 0
+    cloud:
+        openfeign:
+            client:
+                config:
+                    lateLogisticsClient:
+                        url: mock-carrier.onrender.com
+                        connectTimeout: 5000
+                        readTimeout: 5000
+
+
+logistics:
+    apiConfig:
+        baseUrl: https://mock-carrier.onrender.com
+        apiKey: carrier_api_key_1
+        webhookUrl: https://localhost/logistics/webhook
+    retrier:
+        timeout: 5000
+        maxRetries: 3

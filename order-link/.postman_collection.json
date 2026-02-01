@@ -1,0 +1,103 @@
+{
+  "info": {
+    "name": "Order Link API",
+    "_postman_id": "a6d9c3b1-77fd-4ede-9c74-4f802f4fb2b1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "merchantRef", "value": "MERCHANT-12345" }
+  ],
+  "item": [
+    {
+      "name": "Create Order",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"merchantId\": 42,\n  \"merchantRef\": \"{{merchantRef}}\",\n  \"barcode\": \"TRACK123456\",\n  \"recipient\": {\n    \"name\": \"Jane Doe\",\n    \"address1\": \"123 Any Street\",\n    \"address2\": \"Unit 4\",\n    \"postalCode\": \"90210\",\n    \"city\": \"Springfield\",\n    \"country\": \"US\"\n  },\n  \"parcel\": {\n    \"weightGrams\": 750,\n    \"lengthCm\": 12.5,\n    \"widthCm\": 8.4,\n    \"heightCm\": 3.2\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/orders",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "orders" ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Order by Merchant Reference",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/{{merchantRef}}",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "orders", "{{merchantRef}}" ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List Orders",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/orders?page=0&size=10",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "orders" ],
+          "query": [
+            { "key": "page", "value": "0" },
+            { "key": "size", "value": "10" }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Cancel Order",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/{{merchantRef}}",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "orders", "{{merchantRef}}" ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Subscribe to Order Events",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/events/subscribe",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "events", "subscribe" ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Webhook: Late Logistics",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event_id\": \"evt-123\",\n  \"shipment_id\": \"SHIP-123\",\n  \"barcode\": \"TRACK123456\",\n  \"status\": \"DELIVERED\",\n  \"occurred_at\": \"2024-01-01T12:00:00Z\",\n  \"location\": {\n    \"latitude\": 40.7128,\n    \"longitude\": -74.006\n  },\n  \"data\": {\n    \"signature_png_base64\": \"iVBORw0KGgoAAAANSUhEUgAAAAUA\"\n  },\n  \"failedReason\": null\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/webhooks/late-logistics",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "webhooks", "late-logistics" ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
