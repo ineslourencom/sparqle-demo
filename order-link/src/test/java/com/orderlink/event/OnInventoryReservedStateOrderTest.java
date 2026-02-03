@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mock;
@@ -12,7 +13,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Import;
 
 import com.orderlink.config.LogisticsClientConfig;
 import com.orderlink.dto.OrderState;
@@ -31,14 +34,22 @@ class OnInventoryReservedStateOrderTest {
     private LateLogisticsClient lateLogisticsClient;
 
     private OnInventoryReservedStateOrder processor;
+
+    @Autowired
     private LogisticsClientConfig config;
 
     ArgumentCaptor<OrderEvent> eventCaptor = ArgumentCaptor.forClass(OrderEvent.class);
 
     @BeforeEach
     void setUp() {
+        var apiConfig = new LogisticsClientConfig.ApiConfig();
+        apiConfig.setBaseUrl("https://dummy-env.com");
+        apiConfig.setWebhookUrl("https://localhost/logistics/webhook");
+        apiConfig.setApiKey("api-key");
+
         config = new LogisticsClientConfig();
-        config.getApi().setApiKey("api-key");
+        config.setApiConfig(apiConfig);
+
         processor = new OnInventoryReservedStateOrder(eventPublisher, lateLogisticsClient, config);
     }
 
@@ -54,7 +65,7 @@ class OnInventoryReservedStateOrderTest {
 
 
         //when
-        processor.processOrderEvent(new OrderEvent(order.getMerchantRef(), order));
+        processor.processOrderEvent(new OrderEvent(order.getMerchantRef(), order, 0));
 
         //then
         verify(eventPublisher).publishEvent(eventCaptor.capture());
@@ -75,7 +86,7 @@ class OnInventoryReservedStateOrderTest {
                 .thenReturn(new ShipmentResponse("SHIP-1", "TRACKING", order.getTrackingRef()));
 
 
-        processor.processOrderEvent(new OrderEvent(order.getMerchantRef(), order));
+        processor.processOrderEvent(new OrderEvent(order.getMerchantRef(), order, 0));
 
         verify(eventPublisher).publishEvent(eventCaptor.capture());
         var capturedOrder = eventCaptor.getValue().order();
@@ -92,7 +103,7 @@ class OnInventoryReservedStateOrderTest {
         assertThat(order.getState()).isEqualTo(OrderState.PENDING);
 
 
-        processor.processOrderEvent(new OrderEvent(order.getMerchantRef(), order));
+        processor.processOrderEvent(new OrderEvent(order.getMerchantRef(), order, 0));
 
         verify(eventPublisher, never()).publishEvent(any(OrderEvent.class));
         verify(lateLogisticsClient, never()).createShipment(any(), any(ShipmentRequest.class));

@@ -26,5 +26,20 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("Resource not found"));
     }
 
-    private record ErrorResponse(String message) {}
+    @ExceptionHandler(OrderCancellationException.class)
+    public ResponseEntity<ErrorResponse> handleOrderCancellationException(OrderCancellationException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
+    }
+
+    public class ErrorResponse {
+    private String message;
+
+    public ErrorResponse(String message) {
+        this.message = message;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+}
 }

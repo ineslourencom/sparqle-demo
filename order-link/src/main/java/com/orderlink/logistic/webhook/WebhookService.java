@@ -64,7 +64,7 @@ public class WebhookService {
                             .lastUpdatedAt(lastUpdatedAt)
                             .build();
 
-                    return new OrderEvent(merchantRef, order);
+                    return new OrderEvent(merchantRef, order, 0);
                 });
     }
 

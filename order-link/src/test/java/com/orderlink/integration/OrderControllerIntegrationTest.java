@@ -8,8 +8,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
 import org.mockito.Mockito;
-import static org.mockito.Mockito.verify;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -67,6 +68,6 @@ public class OrderControllerIntegrationTest extends AbstractIntegrationTest     
         Awaitility.await()
                 .atMost(Duration.ofSeconds(5))
                 .untilAsserted(
-                        () -> verify(lateLogisticsClient).createShipment(anyString(), any(ShipmentRequest.class)));
+                        () -> verify(lateLogisticsClient, atLeast(3)).createShipment(anyString(), any(ShipmentRequest.class)));
     }
 }

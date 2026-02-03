@@ -3,6 +3,9 @@ FROM eclipse-temurin:21-jdk-alpine
 
 WORKDIR /app
 
+# build the latest version
+RUN ./mvnw clean -B -DskipTests package
+
 # Copy the entire source code and resources
 COPY target/order-link-*.jar /app/app.jar
 

@@ -1,6 +1,7 @@
 package com.orderlink.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -14,6 +15,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -30,19 +32,16 @@ class OnLogisticsConfirmedStateOrderTest {
     @Mock
     private InventoryService inventoryService;
 
+    @InjectMocks
     private OnLogisticsConfirmedStateOrder processor;
 
-    @BeforeEach
-    void setUp() {
-        processor = new OnLogisticsConfirmedStateOrder(inventoryService);
-    }
 
     @Test
     void processOrderEvent_whenStateIsNotLogisticsConfirmed_shouldIgnore() {
         var orderRequest = TestFixtures.sampleOrderRequest();
         var order = Order.newInstance(orderRequest.merchantRef(), orderRequest, OrderState.PENDING, "TRACK-IGNORE");
 
-        processor.processOrderEvent(new OrderEvent(order.getMerchantRef(), order));
+        processor.processOrderEvent(new OrderEvent(order.getMerchantRef(), order, 0));
 
         verifyNoInteractions(inventoryService);
     }
@@ -66,7 +65,7 @@ class OnLogisticsConfirmedStateOrderTest {
                 .thenReturn(Optional.of(entry));
         when(inventoryService.save(entry)).thenReturn(entry);
 
-        processor.processOrderEvent(new OrderEvent(order.getMerchantRef(), order));
+        processor.processOrderEvent(new OrderEvent(order.getMerchantRef(), order, 0));
 
         assertThat(entry.getStatus()).isEqualTo(OrderState.LOGISTICS_CONFIRMED);
         assertThat(entry.getTrackingRef()).isEqualTo(order.getTrackingRef());
@@ -82,7 +81,7 @@ class OnLogisticsConfirmedStateOrderTest {
         when(inventoryService.doFindOrderByMerchantRef(order.getMerchantRef()))
                 .thenReturn(Optional.empty());
 
-        processor.processOrderEvent(new OrderEvent(order.getMerchantRef(), order));
+        processor.processOrderEvent(new OrderEvent(order.getMerchantRef(), order, 0));
 
         verify(inventoryService).doFindOrderByMerchantRef(order.getMerchantRef());
         verify(inventoryService, never()).save(any());

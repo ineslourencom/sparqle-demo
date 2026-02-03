@@ -50,7 +50,7 @@ class OnPendingStateOrderTest {
                 .lastUpdatedAt(ZonedDateTime.now())
                 .build();
 
-        processor.processOrderEvent(new OrderEvent(order.getMerchantRef(), order));
+        processor.processOrderEvent(new OrderEvent(order.getMerchantRef(), order, 0));
 
         verifyNoInteractions(inventoryService);
         verify(eventPublisher, never()).publishEvent(any(OrderEvent.class));
@@ -71,7 +71,7 @@ class OnPendingStateOrderTest {
         when(inventoryService.save(any(InventoryEntry.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        processor.processOrderEvent(new OrderEvent(order.getMerchantRef(), order));
+        processor.processOrderEvent(new OrderEvent(order.getMerchantRef(), order, 0));
 
         verify(inventoryService).doFindOrderByMerchantRef(order.getMerchantRef());
         verify(inventoryService).save(any(InventoryEntry.class));

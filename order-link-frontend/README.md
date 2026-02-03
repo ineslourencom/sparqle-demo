@@ -51,9 +51,7 @@ To get started with this project, follow these steps:
    - Current shipment status 
    - Live updates for shipment status
 
-
    ### Main pages:
-   - Login
    - Shipment status table
 
    ### Functional Requurements:

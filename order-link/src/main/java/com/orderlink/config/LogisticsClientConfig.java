@@ -12,7 +12,7 @@ import lombok.Data;
 @ConfigurationProperties(prefix = "logistics")
 public class LogisticsClientConfig {
 
-    private ApiConfig api;
+    private ApiConfig apiConfig;
 
     @Data
     @Configuration

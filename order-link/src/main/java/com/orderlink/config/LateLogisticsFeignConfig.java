@@ -18,8 +18,8 @@ public class LateLogisticsFeignConfig {
     @Bean
     public Retryer lateLogisticsRetryer() {
         long period = 200L;
-        long maxPeriod = SECONDS.toMillis(2);
-        int maxAttempts = 4;
+        long maxPeriod = SECONDS.toMillis(10);
+        int maxAttempts = 10;
         return new Retryer.Default(period, maxPeriod, maxAttempts);
     }
 

@@ -18,6 +18,7 @@ import com.orderlink.dto.OrderRequest;
 import com.orderlink.dto.OrderResponse;
 import com.orderlink.order.service.OrderServiceFacade;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 
@@ -29,7 +30,7 @@ public class OrderController {
     private final OrderServiceFacade orderService;
 
     @PostMapping
-    public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderRequest orderRequest) {
+    public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody OrderRequest orderRequest) {
         var order = orderService.createOrder(orderRequest);
         return ResponseEntity
         .status(HttpStatus.ACCEPTED)
@@ -38,7 +39,7 @@ public class OrderController {
 
     
     @GetMapping("/{merchantRef}")
-    public ResponseEntity<OrderResponse> getOrderByRef(@PathVariable String merchantRef) {
+    public ResponseEntity<OrderResponse> getOrderByRef(@PathVariable("merchantRef") String merchantRef) {
         try {
             return ResponseEntity.ok(orderService.getOrderByMerchantRef(merchantRef));
         } catch (NotFoundException e) {
@@ -54,7 +55,7 @@ public class OrderController {
     }
 
     @DeleteMapping("/{merchantRef}")
-    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable String merchantRef) throws NotFoundException {
+    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable("merchantRef") String merchantRef) throws NotFoundException {
         var order = orderService.cancelOrderByMerchantRef(merchantRef);
         return ResponseEntity.ok(order);
     }

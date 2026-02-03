@@ -5,11 +5,13 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.orderlink.dto.OrderRequest;
 import com.orderlink.dto.OrderResponse;
 import com.orderlink.dto.OrderState;
 import com.orderlink.event.OrderEvent;
+import com.orderlink.exception.OrderCancellationException;
 import com.orderlink.order.model.Order;
 
 import lombok.RequiredArgsConstructor;
@@ -29,7 +31,7 @@ public class OrderServiceFacade {
                 .orderRequest(orderRequest)
                 .build();
 
-        eventPublisher.publishEvent(new OrderEvent(orderRequest.merchantRef(), internalOrder));
+        eventPublisher.publishEvent(new OrderEvent(orderRequest.merchantRef(), internalOrder, 0));
 
         return OrderResponse.builder()
                 .merchantRef(internalOrder.getMerchantRef())
@@ -62,12 +64,13 @@ public class OrderServiceFacade {
                 .build());
     }
 
+    @Transactional
     public OrderResponse cancelOrderByMerchantRef(String merchantRef) throws NotFoundException {
         var inventoryEntry = inventoryService.doFindOrderByMerchantRef(merchantRef)
                 .orElseThrow(() -> new NotFoundException());
 
         if (!inventoryEntry.getStatus().isCancelable()) {
-            throw new IllegalStateException("Cannot cancel order with status LOGISTICS_CONFIRMED");
+            throw new OrderCancellationException("Cannot cancel order with status " + inventoryEntry.getStatus());
         }
 
         inventoryEntry.setStatus(OrderState.CANCELLED);

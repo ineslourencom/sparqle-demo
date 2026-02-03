@@ -17,8 +17,6 @@ public class EventService implements EventStreamService {
 
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
-
-    @Override
     @Async
     @EventListener
     public void processOrderEvent(OrderEvent event) {
@@ -35,10 +33,10 @@ public class EventService implements EventStreamService {
 
     @Override
     public void addEmitter(SseEmitter emitter) {
-        emitter.onCompletion(() -> removeEmitter(emitter));
-        emitter.onTimeout(() -> removeEmitter(emitter));
-        emitter.onError(error -> removeEmitter(emitter));
         emitters.add(emitter);
+        emitter.onCompletion(() -> emitters.remove(emitter));
+        emitter.onTimeout(() -> emitters.remove(emitter));
+        emitter.onError((ex) -> emitters.remove(emitter));
     }
 
     @Override

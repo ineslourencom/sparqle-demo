@@ -33,7 +33,7 @@ public class OnPendingStateOrder implements OrderProcessor {
         log.info("Processing order in PENDING state for merchantRef: {}", event.merchantRef());
 
         var reservedOrder = reserveInventory(event.order());
-        eventPublisher.publishEvent(new OrderEvent(reservedOrder.getMerchantRef(),reservedOrder));
+        eventPublisher.publishEvent(new OrderEvent(reservedOrder.getMerchantRef(),reservedOrder, event.getRetryCount()));
     }
 
     @Transactional

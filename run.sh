@@ -9,8 +9,8 @@ RUN_DB=0
 RUN_BACKEND=0
 RUN_FRONTEND=0
 
-declare -a CHILD_PIDS=()
-declare -a CHILD_PGIDS=()
+declare -a CHILD_PROCESS_IDS=()
+declare -a CHILD_PROCESS_GROUPS=()
 
 usage() {
     echo "Usage: $0 [-all|-backend]"
@@ -19,21 +19,23 @@ usage() {
 
 cleanup() {
     echo "Stopping infrastructure..."
-    if (( ${#CHILD_PGIDS[@]} )); then
-        for pgid in "${CHILD_PGIDS[@]}"; do
-            kill -- "-${pgid}" 2>/dev/null || true
+
+
+    if (( ${#CHILD_PROCESS_IDS[@]} )); then
+        for process_id in "${CHILD_PROCESS_IDS[@]}"; do
+            kill "${process_id}" 2>/dev/null || true
         done
     fi
-    if (( ${#CHILD_PIDS[@]} )); then
-        for pid in "${CHILD_PIDS[@]}"; do
-            kill "${pid}" 2>/dev/null || true
+    if (( ${#CHILD_PROCESS_GROUPS[@]} )); then
+        for group_id in "${CHILD_PROCESS_GROUPS[@]}"; do
+            kill -- "-${group_id}" 2>/dev/null || true
         done
     fi
     if (( DB_STARTED )); then
         docker stop "${DB_CONTAINER}" >/dev/null 2>&1 || true
     fi
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT INT TERM # stop on cleanup
 
 start_process() {
     local name="$1"
@@ -41,11 +43,13 @@ start_process() {
     ( bash -c "${cmd}" | while IFS= read -r line || [ -n "$line" ]; do
         printf '[%s] %s\n' "${name}" "${line}"
     done ) &
-    local pid=$!
-    local pgid
-    pgid=$(ps -o pgid= "${pid}" | tr -d ' ')
-    CHILD_PIDS+=("${pid}")
-    CHILD_PGIDS+=("${pgid}")
+    local process_id=$!
+    local process_group_id=""
+    process_group_id=$(ps -o pgid= "${process_id}" 2>/dev/null | tr -d ' ') || process_group_id=""
+    CHILD_PROCESS_IDS+=("${process_id}")
+    if [[ -n "${process_group_id}" ]]; then
+        CHILD_PROCESS_GROUPS+=("${process_group_id}")
+    fi
 }
 
 restart_or_run_container() {
@@ -104,11 +108,13 @@ if (( RUN_DB )); then
 fi
 
 if (( RUN_BACKEND )); then
+    start_process "compiling backend" "cd ./order-link && exec mvn clean compile"
     start_process "backend" "cd ./order-link && exec mvn spring-boot:run"
 fi
 
 if (( RUN_FRONTEND )); then
-    start_process "frontend" "cd ./order-link-frontend && npm install && exec npm start"
+    start_process "building frontend" "cd ./order-link-frontend && exec npm install"
+    start_process "frontend" "cd ./order-link-frontend && exec npm run dev"
 fi
 
 if (( RUN_DB )); then
@@ -116,4 +122,4 @@ if (( RUN_DB )); then
 fi
 
 echo "Infrastructure setup complete. Press Ctrl+C to stop everything."
-wait "${CHILD_PIDS[@]}"
+wait "${CHILD_PROCESS_IDS[@]}"

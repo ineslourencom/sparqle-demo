@@ -76,8 +76,8 @@ const formatDateTime = (value: string | Date) => {
             </Column>
             <Column field="externalReference" header="Third Party Tracker" sortable>
                 <template #body="slotProps">
-                    <span class="order-tracking" :class="{ 'order-tracking--missing': !slotProps.data.externalReference }">
-                        {{ slotProps.data.externalReference || 'Not assigned' }}
+                    <span class="order-tracking" :class="{ 'order-tracking--missing': !slotProps.data.trackingRef }">
+                        {{ slotProps.data.trackingRef || 'Not assigned' }}
                     </span>
                 </template>
             </Column>

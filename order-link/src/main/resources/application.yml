@@ -27,14 +27,12 @@ spring:
                         readTimeout: 5000
 logging:
     level:
-        com.orderlink.logistic.client.LateLogisticsClient: DEBUG
-        com.orderlink.logistic.client.LateLogisticsFeignConfig: FULL
-        feign.Logger: DEBUG
+        root: INFO
+        org.springframework.web: TRACE
+        hibernate: INFO
+
 logistics:
     apiConfig:
         baseUrl: https://mock-carrier.onrender.com
         apiKey: carrier_api_key_1
         webhookUrl: https://localhost/logistics/webhook
-    retrier:
-        timeout: 5000
-        maxRetries: 3

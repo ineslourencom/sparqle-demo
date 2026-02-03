@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class LogisticsClientConfig {
 
-    private ApiConfig api = new ApiConfig();
+    private ApiConfig apiConfig = new ApiConfig();
 
     @Data
     public static class ApiConfig {

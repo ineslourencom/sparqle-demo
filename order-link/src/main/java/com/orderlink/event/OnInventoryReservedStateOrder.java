@@ -1,6 +1,6 @@
 package com.orderlink.event;
 
-import java.io.IOException;
+import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -27,6 +27,8 @@ public class OnInventoryReservedStateOrder implements OrderProcessor {
     private final LateLogisticsClient lateLogisticsClient;
     private final LogisticsClientConfig config;
 
+    private static final int MAX_RETRIES = 3;
+
     @Async
     @EventListener
     public void processOrderEvent(OrderEvent event) {
@@ -34,35 +36,53 @@ public class OnInventoryReservedStateOrder implements OrderProcessor {
         var state = event.order().getState();
 
         if (!(OrderState.INVENTORY_RESERVED.equals(state)
-            || OrderState.FAILED_LOGISTICS.equals(state))) {
+                || OrderState.FAILED_LOGISTICS.equals(state))) {
             return;
         }
 
-        log.info("Processing order in {} state for merchantRef: {}", event.order().getState(), event.merchantRef());
+        if (event.getRetryCount() >= MAX_RETRIES) {
+            log.error("Max retries reached for order {}", event.merchantRef());
+            return;
+        }
+
+        log.info("Processing order in {} state for merchantRef: {}, retry {}", event.order().getState(),
+                event.merchantRef(), event.getRetryCount());
+
+        Optional<ShipmentResponse> responseOpt;
         try {
-            var response = createShipment(event.order());
-
-            var updatedOrder = Order.newInstance(event.order().getMerchantRef(), event.order().getOrderRequest(),
-                    OrderState.LOGISTICS_CONFIRMED, response.trackingCode());
-            eventPublisher.publishEvent(new OrderEvent(event.merchantRef(), updatedOrder));
-
-            log.info("Successfully sent order {} to third-party.", event.merchantRef());
-
+            responseOpt = createShipment(event.order());
         } catch (FeignClientException e) {
             log.error("Error occurred while creating shipment for order {}: {}", event.merchantRef(), e.getMessage());
-            eventPublisher.publishEvent(new OrderEvent(event.merchantRef(),
-                    Order.newInstance(event.order().getMerchantRef(), event.order().getOrderRequest(),
-                            OrderState.FAILED_LOGISTICS)));
+            publishOrderEvent(event, OrderState.FAILED_LOGISTICS, null);
             return;
         }
 
+        if (responseOpt.isEmpty()) {
+            log.error("Shipment creation returned empty for order {}", event.merchantRef());
+            publishOrderEvent(event, OrderState.FAILED_LOGISTICS, null);
+        } else {
+            var response = responseOpt.get();
+            publishOrderEvent(event, OrderState.LOGISTICS_CONFIRMED, response.trackingCode());
+            log.info("Successfully sent order {} to third-party.", event.merchantRef());
+        }
     }
 
-    public ShipmentResponse createShipment(Order order) {
+    private void publishOrderEvent(OrderEvent event, OrderState state, String trackingCode) {
+        var updatedOrder = Order.newInstance(
+                event.order().getMerchantRef(),
+                event.order().getOrderRequest(),
+                state,
+                trackingCode);
+        eventPublisher.publishEvent(
+        new OrderEvent(event.merchantRef(), updatedOrder, event.getRetryCount() + 1)
+    );
+    }
 
-        ShipmentRequest shipmentRequest = fromOrder(order, config.getApi().getWebhookUrl());
+    public Optional<ShipmentResponse> createShipment(Order order) {
 
-        return lateLogisticsClient.createShipment(config.getApi().getApiKey(), shipmentRequest);
+        ShipmentRequest shipmentRequest = fromOrder(order, config.getApiConfig().getWebhookUrl());
+
+        return Optional.ofNullable(lateLogisticsClient.createShipment(config.getApiConfig().getApiKey(), shipmentRequest));
 
     }
 

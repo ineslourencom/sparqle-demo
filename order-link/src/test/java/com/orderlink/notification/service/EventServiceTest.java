@@ -42,7 +42,7 @@ class EventServiceTest {
                 .lastUpdatedAt(now)
                 .build();
 
-        var event = new OrderEvent(order.getMerchantRef(), order);
+        var event = new OrderEvent(order.getMerchantRef(), order, 0);
 
         eventService.processOrderEvent(event);
 

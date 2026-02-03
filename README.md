@@ -42,6 +42,6 @@ Refer to [`order-link-frontend/README.md`](../order-link-frontend/README.md) for
 
 1.  **Run both applications and DB using the script**
     ```sh
-    ./run.sh [options: -all -backend]
+    ./run.sh [options: [-all|-backend]]
     ```
 
